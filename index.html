@@ -43,7 +43,7 @@
 				radial-gradient(circle at 78% 8%, rgba(103, 217, 237, .08), transparent 25rem),
 				var(--bg);
 			color: var(--text);
-			font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			font-family: "Segoe UI", Arial, Helvetica, sans-serif;
 			font-size: 16px;
 			line-height: 1.6;
 			-webkit-font-smoothing: antialiased;
@@ -71,7 +71,7 @@
 			border-radius: 6px;
 			background: var(--text);
 			color: var(--bg);
-			font-weight: 800;
+			font-weight: 600;
 			transform: translateY(-160%);
 			transition: transform 180ms ease;
 		}
@@ -117,9 +117,8 @@
 			gap: 11px;
 			color: var(--text);
 			font-size: 14px;
-			font-style: italic;
-			font-weight: 950;
-			letter-spacing: .19em;
+			font-weight: 700;
+			letter-spacing: .14em;
 			text-decoration: none;
 			text-transform: uppercase;
 		}
@@ -161,8 +160,8 @@
 			border-radius: 6px;
 			color: var(--text-muted);
 			font-size: 13px;
-			font-weight: 750;
-			letter-spacing: .08em;
+			font-weight: 600;
+			letter-spacing: .06em;
 			text-decoration: none;
 			text-transform: uppercase;
 			transition: color 180ms ease, background 180ms ease;
@@ -221,8 +220,8 @@
 		.micro-label,
 		.spec-label {
 			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-			font-weight: 750;
-			letter-spacing: .14em;
+			font-weight: 600;
+			letter-spacing: .11em;
 			text-transform: uppercase;
 		}
 
@@ -245,18 +244,16 @@
 		h1, h2, h3, p { margin-top: 0; }
 
 		h1, h2, h3 {
-			font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-			font-weight: 900;
-			text-transform: uppercase;
+			font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+			font-weight: 700;
 		}
 
 		h1 {
 			max-width: 760px;
 			margin-bottom: 26px;
-			font-size: clamp(62px, 8.4vw, 126px);
-			font-style: italic;
-			letter-spacing: -.045em;
-			line-height: .82;
+			font-size: clamp(54px, 7vw, 96px);
+			letter-spacing: -.025em;
+			line-height: .98;
 			text-wrap: balance;
 		}
 
@@ -288,8 +285,8 @@
 			background: var(--red);
 			color: white;
 			font-size: 13px;
-			font-weight: 850;
-			letter-spacing: .1em;
+			font-weight: 700;
+			letter-spacing: .07em;
 			text-decoration: none;
 			text-transform: uppercase;
 			box-shadow: 0 10px 36px rgba(240, 68, 68, .2);
@@ -310,7 +307,7 @@
 			min-height: 44px;
 			color: var(--text-muted);
 			font-size: 13px;
-			font-weight: 700;
+			font-weight: 600;
 		}
 
 		.release-note::before {
@@ -377,7 +374,8 @@
 		.visual-spec strong {
 			display: block;
 			margin-bottom: 2px;
-			font-size: 22px;
+			font-size: 21px;
+			font-weight: 650;
 			line-height: 1.15;
 		}
 
@@ -411,9 +409,9 @@
 		h2 {
 			max-width: 780px;
 			margin-bottom: 0;
-			font-size: clamp(42px, 6vw, 82px);
-			letter-spacing: -.035em;
-			line-height: .92;
+			font-size: clamp(38px, 5vw, 64px);
+			letter-spacing: -.02em;
+			line-height: 1.05;
 			text-wrap: balance;
 		}
 
@@ -456,15 +454,15 @@
 			color: var(--cyan);
 			font-family: ui-monospace, monospace;
 			font-size: 12px;
-			font-weight: 800;
+			font-weight: 600;
 		}
 
 		.feature-card h3 {
 			max-width: 520px;
 			margin-bottom: 13px;
-			font-size: clamp(28px, 3vw, 42px);
-			letter-spacing: -.02em;
-			line-height: 1;
+			font-size: clamp(26px, 2.7vw, 38px);
+			letter-spacing: -.01em;
+			line-height: 1.12;
 		}
 
 		.feature-card p {
@@ -530,7 +528,7 @@
 		.route-line { fill: none; stroke: url(#route-gradient); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 7 7; filter: drop-shadow(0 0 6px rgba(103,217,237,.5)); }
 		.route-node { fill: var(--panel-soft); stroke: var(--cyan); stroke-width: 3; }
 		.route-node.finish { stroke: var(--red); stroke-width: 4; }
-		.route-text { fill: var(--text-soft); font: 800 12px ui-monospace, monospace; letter-spacing: .12em; }
+		.route-text { fill: var(--text-soft); font: 600 12px ui-monospace, monospace; letter-spacing: .1em; }
 
 		.sector-list {
 			display: grid;
@@ -554,14 +552,14 @@
 
 		.sector-number {
 			color: var(--red);
-			font-family: Impact, sans-serif;
+			font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 			font-size: 30px;
-			font-style: italic;
+			font-weight: 700;
 		}
 
-		.sector-name { display: block; font-weight: 800; }
+		.sector-name { display: block; font-weight: 650; }
 		.sector-detail { color: var(--text-muted); font-size: 13px; }
-		.sector-surface { color: var(--cyan); font: 700 11px ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; }
+		.sector-surface { color: var(--cyan); font: 600 11px ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
 
 		.garage-grid {
 			display: grid;
@@ -593,7 +591,7 @@
 			display: block;
 			margin-bottom: 74px;
 			color: var(--text-muted);
-			font: 750 11px ui-monospace, monospace;
+			font: 600 11px ui-monospace, monospace;
 			letter-spacing: .16em;
 			text-transform: uppercase;
 		}
@@ -640,8 +638,8 @@
 			background: transparent;
 			color: var(--text-muted);
 			font-size: 13px;
-			font-weight: 850;
-			letter-spacing: .1em;
+			font-weight: 650;
+			letter-spacing: .07em;
 			text-transform: uppercase;
 			cursor: pointer;
 			transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
@@ -653,7 +651,7 @@
 
 		.mode-content { padding: clamp(28px, 5vw, 64px); }
 		.mode-panel[hidden] { display: none; }
-		.mode-panel h3 { margin-bottom: 14px; font-size: clamp(34px, 4vw, 54px); }
+		.mode-panel h3 { margin-bottom: 14px; font-size: clamp(31px, 3.5vw, 46px); line-height: 1.1; }
 		.mode-panel > p { max-width: 650px; color: var(--text-soft); font-size: 17px; }
 
 		.control-grid {
@@ -684,7 +682,7 @@
 			border-radius: 5px;
 			background: var(--panel);
 			color: var(--text);
-			font: 800 11px ui-monospace, monospace;
+			font: 650 11px ui-monospace, monospace;
 			box-shadow: 0 2px 0 #030405;
 		}
 
@@ -711,7 +709,7 @@
 			content: "";
 		}
 
-		.finale h2 { max-width: 950px; margin-inline: auto; font-size: clamp(54px, 9vw, 126px); }
+		.finale h2 { max-width: 900px; margin-inline: auto; font-size: clamp(44px, 7vw, 84px); line-height: 1.04; }
 		.finale p { max-width: 570px; margin: 28px auto 0; color: var(--text-soft); font-size: 18px; }
 
 		.site-footer {
@@ -753,7 +751,7 @@
 			.nav-links li:nth-child(-n+2) { display: none; }
 			.nav-links a { padding-inline: 10px; }
 			.hero { min-height: auto; padding-top: 122px; padding-bottom: 78px; }
-			h1 { font-size: clamp(54px, 18vw, 88px); }
+			h1 { font-size: clamp(46px, 14vw, 66px); line-height: 1.01; }
 			.hero-grid { gap: 52px; }
 			.hero-visual { padding: 20px; }
 			.section { padding-block: 86px; }
