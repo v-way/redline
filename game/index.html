@@ -44,7 +44,7 @@
 	</div>
 	<script src="index.js"></script>
 	<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":42971664,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":42967232,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const PACK_STALL_TIMEOUT_MS = 30000;
 const PACK_DOWNLOAD_ATTEMPTS = 3;
@@ -58,85 +58,6 @@ const isTabletDevice = () => {
 		&& Math.min(screen.width, screen.height) >= 600;
 	return isIPad || isAndroidTablet;
 };
-
-// Godot's single-threaded Web mixer can miss its deadlines while a tablet is
-// rendering. Tablet vehicle loops therefore use the browser's media pipeline,
-// leaving Godot's mixer untouched for desktop and phones.
-window.RedlineTabletAudioBridge = (() => {
-	const engineSources = {
-		honda_dc2: 'audio/engine_loop_honda.wav',
-		nissan_gtr: 'audio/engine_loop_gtr.wav',
-		ford_mustang_gt: 'audio/engine_loop_mustang.wav',
-		porsche_911_carrera: 'audio/engine_loop_porsche.wav',
-	};
-	const engine = new Audio(engineSources.honda_dc2);
-	let unlocked = false;
-	let blocked = false;
-	let activeEngineSource = engine.src;
-	let targetRate = 1;
-	let appliedRate = 1;
-	let targetVolume = 0;
-	let appliedVolume = 0;
-	let lastAnimationTime = performance.now();
-	engine.loop = true;
-	engine.preload = 'auto';
-	engine.playsInline = true;
-
-	function smoothEngine(now) {
-		const elapsed = Math.min(0.25, Math.max(0, (now - lastAnimationTime) / 1000));
-		lastAnimationTime = now;
-		// Update gentle targets from Godot, then let the browser change media
-		// parameters continuously. Abrupt 20 Hz rate/volume jumps sounded like
-		// breathing on tablets and could click at loop boundaries.
-		const smoothing = 1 - Math.exp(-elapsed / 0.18);
-		appliedRate += (targetRate - appliedRate) * smoothing;
-		appliedVolume += (targetVolume - appliedVolume) * smoothing;
-		engine.playbackRate = appliedRate;
-		engine.volume = appliedVolume;
-		requestAnimationFrame(smoothEngine);
-	}
-	requestAnimationFrame(smoothEngine);
-
-	function start(track) {
-		if (!unlocked || blocked || !track.paused) return;
-		const result = track.play();
-		if (result && typeof result.catch === 'function') result.catch(() => { blocked = true; });
-	}
-
-	function unlock() {
-		if (!isTabletDevice() || unlocked) return;
-		unlocked = true;
-		blocked = false;
-		const result = engine.play();
-		if (result && typeof result.then === 'function') {
-			result.then(() => { engine.pause(); engine.currentTime = 0; }).catch(() => { blocked = true; });
-		}
-	}
-
-	function update(vehicleId, pitch, engineGain, tyreGain) {
-		if (!isTabletDevice()) return;
-		const source = engineSources[vehicleId] || engineSources.honda_dc2;
-		if (source !== activeEngineSource) {
-			activeEngineSource = source;
-			engine.pause();
-			engine.src = source;
-			engine.load();
-		}
-		targetRate = Math.min(1.35, Math.max(0.78, Number(pitch) || 1));
-		targetVolume = Math.min(0.44, Math.max(0, Number(engineGain) || 0));
-		start(engine);
-	}
-
-	function stop() {
-		engine.pause();
-		engine.currentTime = 0;
-	}
-
-	document.addEventListener('pointerdown', unlock, { capture: true, once: true });
-	document.addEventListener('keydown', unlock, { capture: true, once: true });
-	window.addEventListener('pagehide', stop);
-	return { isEnabled: isTabletDevice, update, stop };
-})();
 
 window.RedlinePokiBridge = {
 	setGodotCallback(callback) { godotCallback = callback; },
