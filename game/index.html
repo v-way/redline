@@ -9,16 +9,18 @@
 		body { overflow: hidden; touch-action: none; background: #02070b; color: #e8f8ff; }
 		#canvas { display: block; }
 		#canvas:focus { outline: none; }
-		#status { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; visibility: hidden; background: radial-gradient(circle at 50% 42%, #12304a 0, #06131e 44%, #02070b 75%); font-family: Arial, sans-serif; z-index: 10; }
-		#status-splash { width: min(72vw, 620px); max-height: 55vh; object-fit: contain; }
+		#status { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; visibility: hidden; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); box-sizing: border-box; background: radial-gradient(circle at 50% 42%, #12304a 0, #06131e 44%, #02070b 75%); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; z-index: 10; }
+		#status-splash { width: min(72vw, 620px); max-height: 48vh; object-fit: contain; }
 		#status-splash.show-image--false { display: none; }
 		#status-splash.use-filter--false { image-rendering: pixelated; }
-		#loading-title { color: #6ee9ff; font-size: 13px; font-weight: 800; letter-spacing: .34em; text-indent: .34em; text-transform: uppercase; }
-		#status-progress { display: none; width: min(58vw, 520px); height: 7px; border: 1px solid rgba(110, 233, 255, .52); border-radius: 999px; overflow: hidden; background: rgba(0, 0, 0, .52); accent-color: #43ddff; }
+		#loading-title { color: #6ee9ff; font-size: 13px; font-weight: 700; letter-spacing: .28em; text-indent: .28em; text-transform: uppercase; }
+		#loading-detail { min-height: 1.4em; color: #8ba9b8; font-size: 12px; letter-spacing: .08em; text-align: center; }
+		#status-progress { display: none; width: min(70vw, 520px); height: 9px; border: 1px solid rgba(110, 233, 255, .52); border-radius: 999px; overflow: hidden; background: rgba(0, 0, 0, .52); accent-color: #43ddff; }
 		#status-progress::-webkit-progress-value { background: linear-gradient(90deg, #168bc2, #55efff); box-shadow: 0 0 18px #43ddff; }
-		#status-notice { display: none; max-width: 620px; margin: 0 24px; padding: 16px 20px; border: 1px solid #e24d42; border-radius: 8px; background: #32100e; line-height: 1.4; text-align: center; }
+		#status-notice { display: none; max-width: 620px; margin: 0 24px; padding: 16px 20px; border: 1px solid #e24d42; border-radius: 8px; background: #32100e; line-height: 1.5; text-align: center; }
+		#retry-button { display: none; min-width: 132px; min-height: 48px; padding: 0 22px; border: 1px solid #6ee9ff; border-radius: 8px; background: #0b3045; color: #e8f8ff; font: 700 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; cursor: pointer; }
+		#retry-button:focus-visible { outline: 3px solid #ff4d45; outline-offset: 3px; }
 	</style>
-	<script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>
 	<script>
 		window.addEventListener('keydown', (event) => {
 			if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) event.preventDefault();
@@ -35,75 +37,133 @@
 	<div id="status">
 		<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
 		<div id="loading-title">Loading Redline</div>
-		<progress id="status-progress"></progress>
-		<div id="status-notice"></div>
+		<div id="loading-detail" role="status" aria-live="polite"></div>
+		<progress id="status-progress" aria-label="Game loading progress"></progress>
+		<div id="status-notice" role="alert"></div>
+		<button id="retry-button" type="button">Retry</button>
 	</div>
 	<script src="index.js"></script>
 	<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":39225212,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":42954164,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
-const engine = new Engine(GODOT_CONFIG);
+const PACK_STALL_TIMEOUT_MS = 30000;
+const PACK_DOWNLOAD_ATTEMPTS = 3;
 
-function createPokiFallback() {
-	const resolve = () => Promise.resolve();
-	return {
-		init: resolve,
-		gameLoadingFinished() {}, gameplayStart() {}, gameplayStop() {},
-		commercialBreak: resolve,
-		getDeviceInfo: () => ({ category: matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop' }),
-	};
-}
-
-const poki = window.PokiSDK || createPokiFallback();
 let godotCallback = null;
 window.RedlinePokiBridge = {
 	setGodotCallback(callback) { godotCallback = callback; },
-	gameLoadingFinished() { poki.gameLoadingFinished(); },
-	gameplayStart() { poki.gameplayStart(); },
-	gameplayStop() { poki.gameplayStop(); },
+	gameLoadingFinished() {},
+	gameplayStart() {},
+	gameplayStop() {},
 	getDeviceCategory() {
-		try {
-			const info = poki.getDeviceInfo();
-			return info && info.category ? info.category : (matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop');
-		} catch (_) {
-			return matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
-		}
+		const isIPad = /iPad/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+		if (isIPad) return 'tablet';
+		return matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
 	},
 	commercialBreak() {
 		if (godotCallback) godotCallback('commercial_started');
-		Promise.resolve(poki.commercialBreak()).then(
-			() => { if (godotCallback) godotCallback('commercial_finished'); },
-			() => { if (godotCallback) godotCallback('commercial_failed'); },
-		);
+		queueMicrotask(() => { if (godotCallback) godotCallback('commercial_failed'); });
 	},
 };
 
 (function start() {
 	const overlay = document.getElementById('status');
 	const progress = document.getElementById('status-progress');
+	const title = document.getElementById('loading-title');
+	const detail = document.getElementById('loading-detail');
 	const notice = document.getElementById('status-notice');
+	const retryButton = document.getElementById('retry-button');
 	let initializing = true;
+
 	function setMode(mode) {
 		if (!initializing) return;
 		if (mode === 'hidden') { overlay.remove(); initializing = false; return; }
 		overlay.style.visibility = 'visible';
 		progress.style.display = mode === 'progress' ? 'block' : 'none';
 		notice.style.display = mode === 'notice' ? 'block' : 'none';
+		retryButton.style.display = mode === 'notice' ? 'block' : 'none';
 	}
+
+	function setProgress(current, total, stage) {
+		title.textContent = stage;
+		if (current > 0 && total > 0) {
+			progress.value = current;
+			progress.max = total;
+			detail.textContent = `${Math.min(100, Math.round(current / total * 100))}%`;
+		} else {
+			progress.removeAttribute('value');
+			progress.removeAttribute('max');
+			detail.textContent = '';
+		}
+	}
+
 	function fail(error) {
 		console.error(error);
-		notice.textContent = error instanceof Error ? error.message : String(error);
+		notice.textContent = 'Redline could not finish loading on this device. Check that Safari and iPadOS are up to date, then retry.';
+		detail.textContent = error instanceof Error ? error.message : String(error);
 		setMode('notice');
 	}
+
+	function wait(milliseconds) {
+		return new Promise((resolve) => setTimeout(resolve, milliseconds));
+	}
+
+	async function downloadPack(url, expectedSize) {
+		let lastError = new Error('Game data download failed.');
+		for (let attempt = 1; attempt <= PACK_DOWNLOAD_ATTEMPTS; attempt += 1) {
+			const controller = new AbortController();
+			let stallTimer = 0;
+			const armStallTimer = () => {
+				clearTimeout(stallTimer);
+				stallTimer = setTimeout(() => controller.abort(), PACK_STALL_TIMEOUT_MS);
+			};
+			try {
+				setProgress(0, 0, attempt === 1 ? 'Loading game data' : `Retrying game data ${attempt}/${PACK_DOWNLOAD_ATTEMPTS}`);
+				armStallTimer();
+				const response = await fetch(url, { credentials: 'same-origin', signal: controller.signal });
+				if (!response.ok) throw new Error(`Game data request failed (${response.status}).`);
+				if (!response.body) throw new Error('Streaming downloads are unavailable.');
+				const bytes = new Uint8Array(expectedSize);
+				const reader = response.body.getReader();
+				let offset = 0;
+				while (true) {
+					armStallTimer();
+					const result = await reader.read();
+					if (result.done) break;
+					if (offset + result.value.length > bytes.length) throw new Error('Game data exceeded its expected size.');
+					bytes.set(result.value, offset);
+					offset += result.value.length;
+					setProgress(offset, expectedSize, 'Loading game data');
+				}
+				if (offset !== expectedSize) throw new Error(`Game data was incomplete (${offset}/${expectedSize}).`);
+				clearTimeout(stallTimer);
+				return bytes.buffer;
+			} catch (error) {
+				clearTimeout(stallTimer);
+				lastError = error;
+				if (attempt < PACK_DOWNLOAD_ATTEMPTS) await wait(1000);
+			}
+		}
+		throw lastError;
+	}
+
+	retryButton.addEventListener('click', () => location.reload());
 	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
-	if (missing.length) { fail('Required browser features are missing: ' + missing.join(', ')); return; }
+	if (missing.length) { fail(new Error(`Required browser features are missing: ${missing.join(', ')}`)); return; }
+
 	setMode('progress');
-	Promise.resolve(poki.init()).catch(() => undefined).then(() => engine.startGame({
-		onProgress(current, total) {
-			if (current > 0 && total > 0) { progress.value = current; progress.max = total; }
-			else { progress.removeAttribute('value'); progress.removeAttribute('max'); }
-		},
-	})).then(() => setMode('hidden'), fail);
+	const executable = GODOT_CONFIG.executable;
+	const pack = GODOT_CONFIG.mainPack || `${executable}.pck`;
+	const packSize = GODOT_CONFIG.fileSizes[pack];
+	const engine = new Engine({
+		...GODOT_CONFIG,
+		onProgress(current, total) { setProgress(current, total, 'Loading engine'); },
+	});
+	engine.init(executable)
+		.then(() => downloadPack(pack, packSize))
+		.then((packBuffer) => engine.preloadFile(packBuffer, pack))
+		.then(() => engine.start({ args: ['--main-pack', pack] }))
+		.then(() => setMode('hidden'), fail);
 }());
 	</script>
 </body>
