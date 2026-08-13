@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
+	<title>Redline</title>
+	<style>
+		html, body, #canvas { width: 100%; height: 100%; margin: 0; padding: 0; border: 0; }
+		body { overflow: hidden; touch-action: none; background: #02070b; color: #e8f8ff; }
+		#canvas { display: block; }
+		#canvas:focus { outline: none; }
+		#status { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; visibility: hidden; background: radial-gradient(circle at 50% 42%, #12304a 0, #06131e 44%, #02070b 75%); font-family: Arial, sans-serif; z-index: 10; }
+		#status-splash { width: min(72vw, 620px); max-height: 55vh; object-fit: contain; }
+		#status-splash.show-image--false { display: none; }
+		#status-splash.use-filter--false { image-rendering: pixelated; }
+		#loading-title { color: #6ee9ff; font-size: 13px; font-weight: 800; letter-spacing: .34em; text-indent: .34em; text-transform: uppercase; }
+		#status-progress { display: none; width: min(58vw, 520px); height: 7px; border: 1px solid rgba(110, 233, 255, .52); border-radius: 999px; overflow: hidden; background: rgba(0, 0, 0, .52); accent-color: #43ddff; }
+		#status-progress::-webkit-progress-value { background: linear-gradient(90deg, #168bc2, #55efff); box-shadow: 0 0 18px #43ddff; }
+		#status-notice { display: none; max-width: 620px; margin: 0 24px; padding: 16px 20px; border: 1px solid #e24d42; border-radius: 8px; background: #32100e; line-height: 1.4; text-align: center; }
+	</style>
+	<script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>
+	<script>
+		window.addEventListener('keydown', (event) => {
+			if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) event.preventDefault();
+		}, { passive: false });
+		window.addEventListener('wheel', (event) => event.preventDefault(), { passive: false });
+	</script>
+	<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+</head>
+<body>
+	<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+	<noscript>Your browser does not support JavaScript.</noscript>
+	<div id="status">
+		<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+		<div id="loading-title">Loading Redline</div>
+		<progress id="status-progress"></progress>
+		<div id="status-notice"></div>
+	</div>
+	<script src="index.js"></script>
+	<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":39225228,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+function createPokiFallback() {
+	const resolve = () => Promise.resolve();
+	return {
+		init: resolve,
+		gameLoadingFinished() {}, gameplayStart() {}, gameplayStop() {},
+		commercialBreak: resolve,
+		getDeviceInfo: () => ({ category: matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop' }),
+	};
+}
+
+const poki = window.PokiSDK || createPokiFallback();
+let godotCallback = null;
+window.RedlinePokiBridge = {
+	setGodotCallback(callback) { godotCallback = callback; },
+	gameLoadingFinished() { poki.gameLoadingFinished(); },
+	gameplayStart() { poki.gameplayStart(); },
+	gameplayStop() { poki.gameplayStop(); },
+	getDeviceCategory() {
+		try {
+			const info = poki.getDeviceInfo();
+			return info && info.category ? info.category : (matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop');
+		} catch (_) {
+			return matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
+		}
+	},
+	commercialBreak() {
+		if (godotCallback) godotCallback('commercial_started');
+		Promise.resolve(poki.commercialBreak()).then(
+			() => { if (godotCallback) godotCallback('commercial_finished'); },
+			() => { if (godotCallback) godotCallback('commercial_failed'); },
+		);
+	},
+};
+
+(function start() {
+	const overlay = document.getElementById('status');
+	const progress = document.getElementById('status-progress');
+	const notice = document.getElementById('status-notice');
+	let initializing = true;
+	function setMode(mode) {
+		if (!initializing) return;
+		if (mode === 'hidden') { overlay.remove(); initializing = false; return; }
+		overlay.style.visibility = 'visible';
+		progress.style.display = mode === 'progress' ? 'block' : 'none';
+		notice.style.display = mode === 'notice' ? 'block' : 'none';
+	}
+	function fail(error) {
+		console.error(error);
+		notice.textContent = error instanceof Error ? error.message : String(error);
+		setMode('notice');
+	}
+	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (missing.length) { fail('Required browser features are missing: ' + missing.join(', ')); return; }
+	setMode('progress');
+	Promise.resolve(poki.init()).catch(() => undefined).then(() => engine.startGame({
+		onProgress(current, total) {
+			if (current > 0 && total > 0) { progress.value = current; progress.max = total; }
+			else { progress.removeAttribute('value'); progress.removeAttribute('max'); }
+		},
+	})).then(() => setMode('hidden'), fail);
+}());
+	</script>
+</body>
+</html>
