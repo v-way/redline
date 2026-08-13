@@ -61,10 +61,10 @@
 				<path d="M54 20a23 23 0 0 0-34 3" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
 				<path d="M18 17l3 8 8-3" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 			</svg>
-			<h1 id="orientation-title">请横向旋转设备</h1>
-			<p id="orientation-copy">横屏后会显示完整仪表、转向与踏板控制。</p>
-			<button id="orientation-button" type="button">尝试开启横屏</button>
-			<p id="orientation-detail">旋转到横屏后将自动继续加载。</p>
+			<h1 id="orientation-title">Rotate your device</h1>
+			<p id="orientation-copy">Landscape mode shows the full gauges, steering, and pedal controls.</p>
+			<button id="orientation-button" type="button">Enter landscape mode</button>
+			<p id="orientation-detail">Loading will continue automatically after rotation.</p>
 		</div>
 	</div>
 	<script src="index.js"></script>
@@ -117,13 +117,13 @@ window.RedlinePokiBridge = {
 	}
 
 	async function requestLandscape() {
-		orientationDetail.textContent = '正在请求横屏模式…';
+		orientationDetail.textContent = 'Requesting landscape mode…';
 		try {
 			if (document.fullscreenEnabled && !document.fullscreenElement) await document.documentElement.requestFullscreen();
 			if (screen.orientation?.lock) await screen.orientation.lock('landscape');
-			else orientationDetail.textContent = '此浏览器无法自动横屏，请手动旋转设备。';
+			else orientationDetail.textContent = "This browser can't rotate automatically. Please turn your device manually.";
 		} catch (_error) {
-			orientationDetail.textContent = '此浏览器无法自动横屏，请手动旋转设备。';
+			orientationDetail.textContent = "This browser can't rotate automatically. Please turn your device manually.";
 		}
 		syncOrientationGate();
 	}
